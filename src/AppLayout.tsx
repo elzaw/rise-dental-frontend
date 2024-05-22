@@ -1,14 +1,16 @@
 // import React, { useState, useEffect } from "react";
-import { Link, NavLink, Navigate, Outlet } from "react-router-dom";
+import { Link, NavLink, Navigate, Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import { useAuth } from "./context/AuthContext";
 import { useState } from "react";
 // import Sidebar from "./components/Sidebar";
 import RiseDentalLogo from "@/assets/Logo.svg";
+import { Button } from "./components/ui/button";
 
 const AppLayout = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   const links = [
     {
@@ -37,6 +39,14 @@ const AppLayout = () => {
       icon: <SettingsIcon className="h-4 w-4" />,
     },
   ];
+
+  const handleNavLinkClick = () => {
+    setOpen(false);
+  };
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
   return (
     <div className="flex">
       <div className="flex flex-col items-center justify-center min-h-screen  bg-gray-100 dark:bg-gray-900 md:w-10/12 mt-10 md:mt-0 w-full ">
@@ -71,16 +81,22 @@ const AppLayout = () => {
           )}
         </button>
         {open && (
-          <div className="fixed top-0 left-0 w-screen h-screen bg-[#000080]  text-white flex flex-col items-center justify-center gap-8 text-4xl">
+          <div className="fixed top-0 left-0 w-screen h-screen bg-[#000080] text-white flex flex-col items-center justify-center gap-8 text-4xl">
             {links.map((link) => (
-              // <a href={link.url} key={link.url}>
-              //   {link.title}
-              // </a>
-              <NavLink to={link.url} key={link.url}>
-                {" "}
+              <NavLink
+                to={link.url}
+                key={link.url}
+                onClick={handleNavLinkClick}
+              >
                 {link.title}
               </NavLink>
             ))}
+            <Button
+              className="w-6/12 bg-white text-blue-600 hover:bg-blue-700 rounded"
+              onClick={handleLogout}
+            >
+              تسجيل الخروج
+            </Button>
           </div>
         )}
       </div>
