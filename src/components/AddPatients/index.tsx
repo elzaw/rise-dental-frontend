@@ -67,7 +67,7 @@ const AddPatientPage = () => {
     }
   };
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex justify-center items-center h-full mb-10">
       <div className="lg:m-0 mt-[20rem]  ">
         <Card className="lg:w-[50rem] w-[20rem] ">
           <CardHeader>

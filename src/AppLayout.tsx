@@ -1,5 +1,5 @@
 // import React, { useState, useEffect } from "react";
-import { Link, Navigate, Outlet } from "react-router-dom";
+import { Link, NavLink, Navigate, Outlet } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import { useAuth } from "./context/AuthContext";
 import { useState } from "react";
@@ -39,7 +39,7 @@ const AppLayout = () => {
   ];
   return (
     <div className="flex">
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 md:w-10/12 mt-10 md:mt-0 w-full ">
+      <div className="flex flex-col items-center justify-center min-h-screen  bg-gray-100 dark:bg-gray-900 md:w-10/12 mt-10 md:mt-0 w-full ">
         {isAuthenticated ? <Outlet /> : <Navigate to={"/login"} />}
       </div>
       <div className=" h-full  w-2/12 hidden md:block">
@@ -73,9 +73,13 @@ const AppLayout = () => {
         {open && (
           <div className="fixed top-0 left-0 w-screen h-screen bg-[#000080]  text-white flex flex-col items-center justify-center gap-8 text-4xl">
             {links.map((link) => (
-              <a href={link.url} key={link.url}>
+              // <a href={link.url} key={link.url}>
+              //   {link.title}
+              // </a>
+              <NavLink to={link.url} key={link.url}>
+                {" "}
                 {link.title}
-              </a>
+              </NavLink>
             ))}
           </div>
         )}
