@@ -1,12 +1,4 @@
-import React from "react";
-
-import {
-  CardTitle,
-  CardHeader,
-  CardContent,
-  Card,
-  CardFooter,
-} from "@/components/ui/card";
+import { CardTitle, CardHeader, CardContent, Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
