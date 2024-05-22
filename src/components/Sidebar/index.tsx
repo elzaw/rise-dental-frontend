@@ -1,22 +1,34 @@
 import { useEffect } from "react";
-
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "../ui/button";
 import RiseDentalLogo from "@/assets/Logo.svg";
 import instance from "@/axios/instance";
-import { Link } from "react-router-dom";
-import { Button } from "../ui/button";
+import { useAuth } from "@/context/AuthContext";
 
 const Sidebar = () => {
+  const { logout, token } = useAuth();
+  const navigate = useNavigate();
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await instance.get("/patients");
+        const response = await instance.get("/patients", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         console.log("API Response:", response.data);
       } catch (err) {
         console.error("Error fetching data:", err);
       }
     };
     fetchData();
-  }, []);
+  }, [token]);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   const links = [
     {
@@ -52,15 +64,15 @@ const Sidebar = () => {
         <div className="flex h-[60px] items-center border-b px-6">
           <Link className="flex items-center gap-2 font-semibold" to="/">
             <SmileIcon className="h-6 w-6" />
-            <img src={RiseDentalLogo} alt="Picture of the author" width={200} />
+            <img src={RiseDentalLogo} alt="Logo" width={200} />
           </Link>
-          <Button className="mr-auto h-8 w-8 ">
+          <Button className="mr-auto h-8 w-8">
             <BellIcon className="h-4 w-4" />
-            <span className="sr-only ">تبديل الإشعارات</span>
+            <span className="sr-only">تبديل الإشعارات</span>
           </Button>
         </div>
         <div className="flex-1 overflow-auto py-2">
-          <nav className="grid items-start px-4 text-xl font-medium ">
+          <nav className="grid items-start px-4 text-xl font-medium">
             {links.map((link) => (
               <Link
                 className="flex items-center justify-end gap-3 rounded-lg hover:bg-gray-100 px-3 py-2 text-gray-900 transition-all hover:text-gray-900 dark:bg-gray-800 dark:text-gray-50 dark:hover:text-gray-50"
@@ -72,6 +84,14 @@ const Sidebar = () => {
               </Link>
             ))}
           </nav>
+          <div className="p-4 flex justify-center">
+            <Button
+              className="w-6/12 bg-blue-600 text-white hover:bg-blue-700 rounded"
+              onClick={handleLogout}
+            >
+              تسجيل الخروج
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -141,26 +161,6 @@ function CreditCardIcon(props: any) {
     </svg>
   );
 }
-
-// function SearchIcon(props: any) {
-//   return (
-//     <svg
-//       {...props}
-//       xmlns="http://www.w3.org/2000/svg"
-//       width="24"
-//       height="24"
-//       viewBox="0 0 24 24"
-//       fill="none"
-//       stroke="currentColor"
-//       strokeWidth="2"
-//       strokeLinecap="round"
-//       strokeLinejoin="round"
-//     >
-//       <circle cx="11" cy="11" r="8" />
-//       <path d="m21 21-4.3-4.3" />
-//     </svg>
-//   );
-// }
 
 function SettingsIcon(props: any) {
   return (
