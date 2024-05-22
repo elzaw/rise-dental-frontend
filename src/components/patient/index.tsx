@@ -130,19 +130,21 @@ const Patient = () => {
             <span className="text-gray-900 dark:text-gray-50 font-medium mr-2">
               {patient?.name}
             </span>
-            {/* UserIcon */}
+            <UserIcon />
           </div>
           <div className="flex items-center justify-end">
             <span className="text-gray-900 dark:text-gray-50 mr-2">
               {patient?.address}
             </span>
-            {/* MapPinIcon */}
+
+            <MapPinIcon />
           </div>
           <div className="flex items-center justify-end">
             <span className="text-gray-900 dark:text-gray-50 mr-2">
               {patient?.phone}
             </span>
-            {/* PhoneIcon */}
+
+            <PhoneIcon />
           </div>
         </div>
       </div>
@@ -255,7 +257,7 @@ const Patient = () => {
         {examinations?.map((exam, index) => (
           <div
             key={index}
-            className="bg-white dark:bg-gray-950 rounded-lg shadow-lg p-6 lg:mx-20 m-5 border-2 border-[#000080] "
+            className="bg-white dark:bg-gray-950 rounded shadow-lg p-6 lg:mx-20 m-5 border border-[#000080] "
           >
             {/* Display examination details */}
             <div className="flex items-center justify-end">
@@ -301,19 +303,19 @@ const Patient = () => {
               </span>
             </div>
             {/* Edit/Update buttons */}
-            <div className="flex items-center justify-start mt-4">
-              <button
-                className="text-[#000080] bg-transparent border border-[#000080] px-10 py-3 rounded-md hover:bg-[#000080] hover:text-white mr-2"
+            <div className="flex items-center justify-start mt-4 rp">
+              <Button
+                className="text-[#000080] bg-transparent border border-[#000080] px-10 py-3 rounded hover:bg-[#000080] hover:text-white mr-2"
                 onClick={() => handleEdit(exam)}
               >
                 تعديل
-              </button>
-              <button
-                className="text-red-500 bg-transparent border border-red-500 px-10 py-3 rounded-md hover:bg-red-500 hover:text-white"
+              </Button>
+              <Button
+                className="text-red-500 bg-transparent border border-red-500 px-10 py-3 rounded hover:bg-red-500 hover:text-white"
                 onClick={() => handleDelete(exam._id)}
               >
                 حذف
-              </button>
+              </Button>
             </div>
           </div>
         ))}
