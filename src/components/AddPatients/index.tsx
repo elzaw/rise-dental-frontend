@@ -1,62 +1,48 @@
-import React, { FormEvent, useEffect, useState } from "react";
-
+import React, { useEffect, useState } from "react";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { CardTitle, CardHeader, CardContent, Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import instance from "@/axios/instance";
 
-interface patient {
+interface Patient {
   _id: string;
   name: string;
   phone: string;
   address: string;
 }
 
+interface FormData {
+  name: string;
+  phone: string;
+  address: string;
+}
+
 const AddPatientPage = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    address: "",
-  });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<FormData>();
+  const [patients, setPatients] = useState<Patient[]>([]);
 
-  const [patients, setPatients] = useState<patient[]>([]);
-
-  // Function to handle form submission
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onSubmit: SubmitHandler<FormData> = async (data) => {
     try {
-      // Make POST request to the /patients endpoint with form data
-      const response = await instance.post("/patients", formData);
+      const response = await instance.post("/patients", data);
       toast.success("تم اضافة مريض جديد");
       console.log("New patient added:", response.data);
-
-      // Clear form fields after successful submission
-      setFormData({ name: "", phone: "", address: "" });
+      reset();
+      fetchData();
     } catch (error) {
       toast.error("أتأكد من البيانات");
-
       console.error("Error adding patient:", error);
     }
-    fetchData();
   };
 
-  // Function to handle input changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    // Update form data with new input value
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
   const fetchData = async () => {
     try {
       const response = await instance.get("/patients");
@@ -66,27 +52,33 @@ const AddPatientPage = () => {
       console.error("Error fetching data:", err);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   return (
     <div className="flex justify-center items-center h-full mb-10">
-      <div className="lg:m-0 mt-[20rem]  ">
-        <Card className="lg:w-[50rem] w-[20rem] ">
+      <div className="lg:m-0 mt-[20rem]">
+        <Card className="lg:w-[50rem] w-[20rem]">
           <CardHeader>
             <CardTitle className="text-end">إضافة مريض جديد</CardTitle>
           </CardHeader>
           <CardContent>
-            <form className="grid gap-4" onSubmit={handleSubmit}>
+            <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-2">
                 <Label htmlFor="name" className="flex justify-end">
                   الاسم
                 </Label>
                 <Input
                   id="name"
-                  name="name"
-                  value={formData.name}
+                  {...register("name", { required: "هذا الحقل مطلوب" })}
                   placeholder="أدخل الاسم"
-                  onChange={handleChange}
                   className="text-end"
                 />
+                {errors.name && (
+                  <p className="text-red-500 text-end">{errors.name.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -95,13 +87,22 @@ const AddPatientPage = () => {
                 </Label>
                 <Input
                   id="phone"
-                  name="phone"
-                  value={formData.phone}
+                  {...register("phone", {
+                    required: "هذا الحقل مطلوب",
+                    pattern: {
+                      value: /^[0-9]{10,15}$/,
+                      message: "رقم التليفون غير صالح",
+                    },
+                  })}
                   placeholder="أدخل رقم التليفون"
                   type="tel"
-                  onChange={handleChange}
                   className="text-end"
                 />
+                {errors.phone && (
+                  <p className="text-red-500 text-end">
+                    {errors.phone.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -110,17 +111,21 @@ const AddPatientPage = () => {
                 </Label>
                 <Input
                   id="address"
-                  name="address"
-                  value={formData.address}
+                  {...register("address", { required: "هذا الحقل مطلوب" })}
                   placeholder="أدخل العنوان"
-                  onChange={handleChange}
                   className="text-end"
                 />
+                {errors.address && (
+                  <p className="text-red-500 text-end">
+                    {errors.address.message}
+                  </p>
+                )}
               </div>
-              <div className="flex justify-center ">
+
+              <div className="flex justify-center">
                 <Button
                   type="submit"
-                  className="bg-[#000080] hover:bg-[#000090] text-white  lg:w-3/12 rounded "
+                  className="bg-[#000080] hover:bg-[#000090] text-white lg:w-3/12 rounded"
                 >
                   إضافة مريض
                 </Button>
@@ -129,17 +134,17 @@ const AddPatientPage = () => {
           </CardContent>
         </Card>
         <h2 className="text-4xl font-bold mb-4 text-right mt-10">المرضي</h2>
-        {patients.map((patient, index) => (
+        {patients.map((patient) => (
           <Link
             to={`/patient/${patient._id}`}
-            key={index}
+            key={patient._id}
             className="text-gray-900 dark:text-gray-50"
           >
             <div className="bg-white dark:bg-gray-950 rounded-lg shadow-lg p-6 mt-5 cursor-pointer mb-5">
               <h2 className="text-2xl font-bold mb-4 text-right">
                 معلومات الاتصال
               </h2>
-              <div className="grid lg:grid-cols-3 grid-cols-1  gap-4">
+              <div className="grid lg:grid-cols-3 grid-cols-1 gap-4">
                 <div className="flex items-center justify-end">
                   <span className="text-gray-900 dark:text-gray-50 font-medium mr-2">
                     {patient.name}

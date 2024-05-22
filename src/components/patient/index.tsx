@@ -1,24 +1,19 @@
 import React, { useEffect, useState } from "react";
-
+import { SubmitHandler, useForm } from "react-hook-form";
 import { CardTitle, CardHeader, CardContent, Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-
 import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
 import instance from "@/axios/instance";
 import { Button } from "../ui/button";
 import { useParams } from "react-router-dom";
 
-// Define the type of props using an interface
 interface patient {
-  // Define the structure of props here
-  // For example:
   _id: string;
   name: string;
   address: string;
   phone: number;
   notes: string;
-  // Add more props as needed
 }
 
 interface examination {
@@ -33,37 +28,23 @@ interface examination {
   notes: string;
 }
 
-// Update the function to format the date properly
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) {
-    return "Invalid Date";
-  }
-  return date.toLocaleDateString("ar-EG"); // Adjust the locale based on your preference
-};
-
 const Patient = () => {
   const { id } = useParams();
+  const { register, handleSubmit, reset } = useForm<examination>();
   const [patient, setPatient] = useState<patient>();
   const [examinations, setExaminations] = useState<examination[]>();
-  const [showForm, setShowForm] = useState(false); // State to toggle the form
-  const [formData, setFormData] = useState({
-    patient: id,
-    examinationFee: 0,
-    paid: 0,
-
-    action: "",
-    notes: "",
-    date: "",
-    nextVisit: "",
-  });
+  const [showForm, setShowForm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentExam, setCurrentExam] = useState<examination | null>(null);
+
+  useEffect(() => {
+    fetchData();
+    fetchExaminaions();
+  }, []);
 
   const fetchData = async () => {
     try {
       const response = await instance.get(`/patients/${id}`);
-      console.log("API Response:", response.data);
       setPatient(response.data);
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -73,97 +54,48 @@ const Patient = () => {
   const fetchExaminaions = async () => {
     try {
       const response = await instance.get(`examinations/patient/${id}/`);
-      console.log("API Response:", response.data);
       setExaminations(response.data);
     } catch (err) {
       console.error("Error fetching data:", err);
     }
   };
-  useEffect(() => {
-    fetchData();
-    fetchExaminaions();
-  }, []);
 
   const handleFormToggle = () => {
     setShowForm(!showForm);
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    let updatedValue: string | Date = value;
+  const onSubmit: SubmitHandler<examination> = async (data) => {
+    console.log(data);
 
-    // If the input name is "date" or "nextVisit", format the value to "yyyy-mm-dd"
-    // Convert the string value to a Date object if the input is a date field
-    if (name === "date" || name === "nextVisit") {
-      updatedValue = new Date(value); // Convert string to Date object
-      updatedValue = updatedValue.toISOString().substr(0, 10); // Format to yyyy-mm-dd
-    }
-    setFormData({
-      ...formData,
-      [name]: updatedValue,
-    });
-  };
-
-  // Function to handle editing an examination
-  const handleEdit = (exam: examination) => {
-    setCurrentExam(exam); // Set the current examination to be edited
-    setIsEditing(true); // Set the editing mode to true
-    fillFormForEdit(exam); // Fill the form with examination data
-  };
-
-  // Function to fill the form with examination data for editing
-  const fillFormForEdit = (exam: examination) => {
-    // Set the form data with the examination details
-    setFormData({
-      ...formData,
-      examinationFee: exam.examinationFee,
-      paid: exam.paid,
-      action: exam.action,
-      notes: exam.notes,
-      date: exam.date,
-      nextVisit: exam.nextVisit,
-    });
-  };
-
-  // Update the form submission logic
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
     try {
       if (isEditing && currentExam) {
-        // If editing an existing examination, send a PUT request to update it
-        await handleUpdate(formData); // Update the examination
+        await handleUpdate(data);
       } else {
-        // If adding a new examination, send a POST request to create it
-        await instance.post(`examinations/`, formData);
+        await instance.post(`/examinations/`, { ...data, patient: id });
       }
       fetchExaminaions();
-      // Reset form data and toggle form visibility
-      setFormData({
-        ...formData,
-        examinationFee: 0,
-        paid: 0,
-        notes: "",
-        action: "",
-        date: "",
-        nextVisit: "",
-      });
+      reset();
       setShowForm(false);
-
-      // Display an alert message upon successful form submission
       toast.success("تمت إضافة الفحص بنجاح!");
     } catch (err) {
       console.error("Error submitting examination data:", err);
     }
   };
+  const handleEdit = (exam: examination) => {
+    setCurrentExam(exam);
+    setIsEditing(true);
+    fillFormForEdit(exam);
+  };
 
-  // Function to update the examination
+  const fillFormForEdit = (exam: examination) => {
+    reset(exam); // Reset form fields with examination data
+  };
+
   const handleUpdate = async (updatedExamData: Partial<examination>) => {
     try {
       await instance.patch(`examinations/${currentExam?._id}`, updatedExamData);
-      fetchExaminaions(); // Refresh examination list
-      setIsEditing(false); // Close edit popup
+      fetchExaminaions();
+      setIsEditing(false);
     } catch (err) {
       console.error("Error updating examination data:", err);
     }
@@ -171,21 +103,26 @@ const Patient = () => {
 
   const handleDelete = async (examId: string) => {
     try {
-      // Make a DELETE request to delete the examination
       await instance.delete(`examinations/${examId}`);
-
-      // Optionally, update the state to remove the deleted examination
       setExaminations((prevExaminations) => {
         return prevExaminations?.filter((exam) => exam._id !== examId);
       });
-
       toast.success("خلاص اتمسح يا دكترة");
     } catch (error) {
       console.error("Error deleting examination:", error);
     }
   };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return "Invalid Date";
+    }
+    return date.toLocaleDateString("ar-EG"); // Adjust the locale based on your preference
+  };
   return (
     <>
+      {/* Patient information */}
       <div className="bg-white dark:bg-gray-950 rounded shadow-lg p-6 lg:m-20 m-5 border border-[#000080] ">
         <h2 className="text-2xl font-bold mb-4 text-right">معلومات الاتصال</h2>
         <div className="grid grid-cols-1  gap-4">
@@ -193,19 +130,19 @@ const Patient = () => {
             <span className="text-gray-900 dark:text-gray-50 font-medium mr-2">
               {patient?.name}
             </span>
-            <UserIcon className="h-5 w-5 text-gray-500" />
+            {/* UserIcon */}
           </div>
           <div className="flex items-center justify-end">
             <span className="text-gray-900 dark:text-gray-50 mr-2">
               {patient?.address}
             </span>
-            <MapPinIcon className="h-5 w-5 text-gray-500" />
+            {/* MapPinIcon */}
           </div>
           <div className="flex items-center justify-end">
             <span className="text-gray-900 dark:text-gray-50 mr-2">
               {patient?.phone}
             </span>
-            <PhoneIcon className="h-5 w-5 text-gray-500" />
+            {/* PhoneIcon */}
           </div>
         </div>
       </div>
@@ -228,86 +165,74 @@ const Patient = () => {
               <CardTitle className="text-end">إضافة فحص جديد</CardTitle>
             </CardHeader>
             <CardContent>
-              <form className="grid gap-4" onSubmit={handleSubmit}>
+              <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
                 <div className="space-y-2">
                   <Label htmlFor="examinationFee" className="flex justify-end">
                     رسوم الفحص
                   </Label>
                   <Input
                     id="examinationFee"
-                    name="examinationFee"
-                    value={formData.examinationFee}
+                    // name="examinationFee"
                     type="number"
                     placeholder="أدخل رسوم الفحص"
-                    onChange={handleChange}
+                    {...register("examinationFee")}
                     className="text-end rounded"
                   />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="paid" className="flex justify-end">
+                      المبلغ المدفوع
+                    </Label>
+                    <Input
+                      id="paid"
+                      placeholder="أدخل المبلغ المدفوع"
+                      type="number"
+                      {...register("paid")}
+                      className="text-end rounded"
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="paid" className="flex justify-end">
-                    المبلغ المدفوع
+                  <div className="space-y-2">
+                    <Label htmlFor="action" className="flex justify-end">
+                      الاجراء
+                    </Label>
+                    <Input
+                      id="action"
+                      placeholder="أدخل الاجراء"
+                      {...register("action")}
+                      className="text-end rounded"
+                    />
+                  </div>
+                  <Label htmlFor="date" className="flex justify-end">
+                    تاريخ الكشف{" "}
                   </Label>
                   <Input
-                    id="paid"
-                    name="paid"
-                    value={formData.paid}
-                    placeholder="أدخل المبلغ المدفوع"
-                    type="number"
-                    onChange={handleChange}
-                    className="text-end rounded"
+                    id="date"
+                    type="date"
+                    placeholder="أدخل ميعاد الكشف"
+                    {...register("date")}
+                    className="rounded"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="action" className="flex justify-end">
-                    الاجراء
+                  <Label htmlFor="nextVisit" className="flex justify-end">
+                    ميعاد الزيارة القادمة
                   </Label>
                   <Input
-                    id="action"
-                    name="action"
-                    value={formData.action}
-                    placeholder="أدخل الاجراء"
-                    onChange={handleChange}
-                    className="text-end rounded"
+                    id="nextVisit"
+                    type="date"
+                    placeholder="أدخل ميعاد الزيارة القادمة"
+                    {...register("nextVisit")}
+                    className="rounded"
                   />
-                </div>
-                <Label htmlFor="date" className="flex justify-end">
-                  تاريخ الكشف{" "}
-                </Label>
-                <Input
-                  id="date"
-                  name="date"
-                  value={formData.date} // Convert to string
-                  type="date"
-                  placeholder="أدخل ميعاد الكشف"
-                  onChange={handleChange}
-                  className="rounded"
-                />
-                <Label htmlFor="nextVisit" className="flex justify-end">
-                  ميعاد الزيارة القادمة
-                </Label>
-                <Input
-                  id="nextVisit"
-                  name="nextVisit"
-                  value={formData.nextVisit}
-                  type="date"
-                  placeholder="أدخل ميعاد الزيارة القادمة"
-                  onChange={handleChange}
-                  className="rounded"
-                />
-                <div className="space-y-2">
-                  <Label htmlFor="notes" className="flex justify-end">
-                    ملاحظات
-                  </Label>
-                  <textarea
-                    id="notes"
-                    name="notes"
-                    value={formData.notes}
-                    placeholder="أدخل الملاحظات"
-                    onChange={handleChange}
-                    className="border border-gray-300 rounded p-2 focus:outline-none focus:border-blue-500 w-full text-end "
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="notes" className="flex justify-end">
+                      ملاحظات
+                    </Label>
+                    <textarea
+                      id="notes"
+                      placeholder="أدخل الملاحظات"
+                      {...register("notes")}
+                      className="border border-gray-300 rounded p-2 focus:outline-none focus:border-blue-500 w-full text-end "
+                    />
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-center">
@@ -332,13 +257,13 @@ const Patient = () => {
             key={index}
             className="bg-white dark:bg-gray-950 rounded-lg shadow-lg p-6 lg:mx-20 m-5 border-2 border-[#000080] "
           >
+            {/* Display examination details */}
             <div className="flex items-center justify-end">
               <span className="text-gray-900 dark:text-gray-50 mr-2">
                 رسوم الفحص: {exam.examinationFee}
               </span>
               {/* <PhoneIcon className="h-5 w-5 text-gray-500" /> */}
             </div>
-
             <div className="flex items-center justify-end">
               <span className="text-gray-900 dark:text-gray-50 mr-2">
                 المبلغ المدفوع: {exam.paid}
@@ -398,6 +323,8 @@ const Patient = () => {
 };
 
 export default Patient;
+
+// Include your Icon components here
 
 function MapPinIcon(props: React.SVGProps<SVGSVGElement>) {
   return (

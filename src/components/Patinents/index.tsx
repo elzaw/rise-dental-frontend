@@ -56,7 +56,7 @@ const PatientsPage = () => {
       <h2 className="text-2xl font-bold mb-4 text-right">ابحث عن مريض</h2>
       <input
         type="search"
-        placeholder="ابحث عن مريض"
+        placeholder="اكتب اسم المريض"
         value={searchQuery}
         onChange={handleSearch}
         className="rounded border-gray-300 focus:border-blue-500 ring  focus:ring  focus:ring-blue-200 focus:ring-opacity-50 w-full p-2 text-end"
